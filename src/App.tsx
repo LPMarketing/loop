@@ -1,17 +1,12 @@
-import { MotionConfig } from 'motion/react';
+import { AnimatePresence, MotionConfig } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
 import { ArtistFullscreenProfile } from './components/ArtistFullscreenProfile';
 import { DjIntroOverlay } from './components/DjIntroOverlay';
-import { FlyerMosaic } from './components/FlyerMosaic';
+import { FlyerMosaic, type TileOrigin } from './components/FlyerMosaic';
 import { getArtistBySlug } from './data/artists';
 import { playDjTransitionSound, unlockDjAudio } from './utils/djSound';
 
 const DEFAULT_TITLE = 'Loop Talents — Casting & Portfólio de Artistas';
-
-type ViewTransitionDocument = Document & {
-  startViewTransition?: (callback: () => void) => { finished: Promise<void> };
-};
 
 function parseArtistSlug(pathname: string): string | null {
   const clean = pathname.replace(/\/+$/, '') || '/';
@@ -29,20 +24,17 @@ function prefersReducedMotion(): boolean {
 }
 
 export default function App() {
-  const [activeSlug, setActiveSlug] = useState<string | null>(() =>
-    parseArtistSlug(window.location.pathname)
-  );
-  const [showIntro, setShowIntro] = useState<boolean>(() => {
-    const initialArtist = parseArtistSlug(window.location.pathname);
-    return !initialArtist && !prefersReducedMotion();
-  });
-  const [transitionSlug, setTransitionSlug] = useState<string | null>(null);
-  const [useFallbackAnimation, setUseFallbackAnimation] = useState(false);
+  const initialSlug = parseArtistSlug(window.location.pathname);
 
-  const mosaicScrollYRef = useRef<number | null>(null);
-  const lastOpenedSlugRef = useRef<string | null>(
-    parseArtistSlug(window.location.pathname)
-  );
+  const [activeSlug, setActiveSlug] = useState<string | null>(initialSlug);
+  const [tileOrigin, setTileOrigin] = useState<TileOrigin | null>(null);
+  const [animateProfileMount, setAnimateProfileMount] = useState<boolean>(!initialSlug);
+  const [showIntro, setShowIntro] = useState<boolean>(() => {
+    return !initialSlug && !prefersReducedMotion();
+  });
+
+  const lastOpenedSlugRef = useRef<string | null>(initialSlug);
+  const savedScrollYRef = useRef<number>(0);
 
   // Libera Web Audio no primeiro toque em navegadores móveis caso o autoplay inicial tenha sido bloqueado
   useEffect(() => {
@@ -60,16 +52,25 @@ export default function App() {
     }
   }, [activeSlug]);
 
-  const restoreMosaicScrollSync = useCallback((slugToFocus: string | null) => {
-    if (mosaicScrollYRef.current !== null) {
-      window.scrollTo({ top: mosaicScrollYRef.current, behavior: 'auto' });
-    } else if (slugToFocus) {
-      const tile = document.getElementById(`tile-${slugToFocus}`);
-      if (tile) {
-        tile.scrollIntoView({ behavior: 'auto', block: 'center' });
+  // Trava rolagem do mosaico em segundo plano enquanto o perfil está aberto, preservando a posição exata
+  useEffect(() => {
+    if (!activeSlug) return;
+
+    savedScrollYRef.current = window.scrollY;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+      if (window.scrollY !== savedScrollYRef.current) {
+        window.scrollTo({ top: savedScrollYRef.current, behavior: 'auto' });
       }
-    }
-  }, []);
+    };
+  }, [activeSlug]);
 
   const focusMosaicTile = useCallback((slugToFocus: string | null) => {
     if (!slugToFocus) return;
@@ -81,80 +82,18 @@ export default function App() {
     });
   }, []);
 
-  const runTransition = useCallback(
-    (
-      slugForSharedElement: string | null,
-      updateDom: () => void,
-      afterDomFlush?: () => void,
-      onDone?: () => void
-    ) => {
-      const doc = document as ViewTransitionDocument;
-      const canUseViewTransition =
-        Boolean(slugForSharedElement) &&
-        typeof doc.startViewTransition === 'function' &&
-        !prefersReducedMotion();
+  const handleOpenArtist = useCallback((slug: string, origin?: TileOrigin) => {
+    lastOpenedSlugRef.current = slug;
+    setTileOrigin(origin ?? null);
+    setAnimateProfileMount(true);
+    void playDjTransitionSound();
 
-      if (canUseViewTransition && doc.startViewTransition) {
-        try {
-          setUseFallbackAnimation(false);
-          flushSync(() => {
-            setTransitionSlug(slugForSharedElement);
-          });
-
-          const transition = doc.startViewTransition(() => {
-            flushSync(() => {
-              updateDom();
-            });
-            afterDomFlush?.();
-          });
-
-          transition.finished
-            .catch(() => {
-              // Ignora abort caso o usuário navegue rapidamente
-            })
-            .finally(() => {
-              setTransitionSlug(null);
-              onDone?.();
-            });
-          return;
-        } catch {
-          setTransitionSlug(null);
-        }
-      }
-
-      // Fallback curto para navegador interno do Instagram ou movimento reduzido
-      setUseFallbackAnimation(!prefersReducedMotion());
-      flushSync(() => {
-        updateDom();
-      });
-      afterDomFlush?.();
-      onDone?.();
-    },
-    []
-  );
-
-  const handleOpenArtist = useCallback(
-    (slug: string) => {
-      mosaicScrollYRef.current = window.scrollY;
-      lastOpenedSlugRef.current = slug;
-      void playDjTransitionSound();
-
-      runTransition(
-        slug,
-        () => {
-          const targetPath = `/artistas/${slug}`;
-          if (window.location.pathname !== targetPath) {
-            window.history.pushState({ fromMosaic: true, slug }, '', targetPath);
-          }
-          setActiveSlug(slug);
-        },
-        () => {
-          window.scrollTo({ top: 0, behavior: 'auto' });
-        }
-      );
-    },
-    [runTransition]
-  );
+    const targetPath = `/artistas/${slug}`;
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({ fromMosaic: true, slug }, '', targetPath);
+    }
+    setActiveSlug(slug);
+  }, []);
 
   const handleBackToCasting = useCallback(() => {
     const slugToFocus = activeSlug || lastOpenedSlugRef.current;
@@ -164,78 +103,66 @@ export default function App() {
       return;
     }
 
-    runTransition(
-      slugToFocus,
-      () => {
-        if (window.location.pathname !== '/') {
-          window.history.replaceState({}, '', '/');
-        }
-        setActiveSlug(null);
-      },
-      () => {
-        restoreMosaicScrollSync(slugToFocus);
-      },
-      () => {
-        focusMosaicTile(slugToFocus);
-      }
-    );
-  }, [activeSlug, focusMosaicTile, restoreMosaicScrollSync, runTransition]);
+    if (window.location.pathname !== '/') {
+      window.history.replaceState({}, '', '/');
+    }
+    setActiveSlug(null);
+    focusMosaicTile(slugToFocus);
+  }, [activeSlug, focusMosaicTile]);
 
-  // Sincroniza botão Voltar/Avançar do navegador (incluindo retorno ao mosaico)
+  // Fecha perfil com a tecla Escape no desktop
+  useEffect(() => {
+    if (!activeSlug) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleBackToCasting();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeSlug, handleBackToCasting]);
+
+  // Sincroniza botão Voltar/Avançar do navegador
   useEffect(() => {
     const handlePopState = () => {
       const nextSlug = parseArtistSlug(window.location.pathname);
 
       if (nextSlug) {
         lastOpenedSlugRef.current = nextSlug;
-        runTransition(
-          nextSlug,
-          () => {
-            setActiveSlug(nextSlug);
-          },
-          () => {
-            window.scrollTo({ top: 0, behavior: 'auto' });
-          }
-        );
+        setAnimateProfileMount(true);
+        setActiveSlug(nextSlug);
       } else {
         const slugToFocus = lastOpenedSlugRef.current;
-        runTransition(
-          slugToFocus,
-          () => {
-            setActiveSlug(null);
-          },
-          () => {
-            restoreMosaicScrollSync(slugToFocus);
-          },
-          () => {
-            focusMosaicTile(slugToFocus);
-          }
-        );
+        setActiveSlug(null);
+        focusMosaicTile(slugToFocus);
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [focusMosaicTile, restoreMosaicScrollSync, runTransition]);
+  }, [focusMosaicTile]);
 
   return (
     <MotionConfig reducedMotion="user">
       {showIntro && <DjIntroOverlay onComplete={() => setShowIntro(false)} />}
 
-      {activeSlug ? (
-        <ArtistFullscreenProfile
-          slug={activeSlug}
-          transitionSlug={transitionSlug}
-          useFallbackAnimation={useFallbackAnimation}
-          onBack={handleBackToCasting}
-        />
-      ) : (
-        <FlyerMosaic
-          transitionSlug={transitionSlug}
-          hideHeroLogo={showIntro}
-          onSelectArtist={handleOpenArtist}
-        />
-      )}
+      <FlyerMosaic
+        hideHeroLogo={showIntro}
+        isBackgrounded={Boolean(activeSlug)}
+        onSelectArtist={handleOpenArtist}
+      />
+
+      <AnimatePresence>
+        {activeSlug && (
+          <ArtistFullscreenProfile
+            key={activeSlug}
+            slug={activeSlug}
+            origin={tileOrigin}
+            animateOnMount={animateProfileMount}
+            onBack={handleBackToCasting}
+          />
+        )}
+      </AnimatePresence>
     </MotionConfig>
   );
 }

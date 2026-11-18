@@ -6,25 +6,24 @@ import { isSoundMuted, setSoundMuted, unlockDjAudio } from '../utils/djSound';
 import { Footer } from './Footer';
 import { SpotifyLogo } from './SpotifyLogo';
 
+export interface TileOrigin {
+  xPct: number;
+  yPct: number;
+}
+
 interface FlyerMosaicProps {
-  transitionSlug: string | null;
   hideHeroLogo?: boolean;
-  onSelectArtist: (slug: string) => void;
+  isBackgrounded?: boolean;
+  onSelectArtist: (slug: string, origin?: TileOrigin) => void;
 }
 
 interface FlyerTileProps {
   artist: Artist;
   index: number;
-  isTransitionTarget: boolean;
-  onSelectArtist: (slug: string) => void;
+  onSelectArtist: (slug: string, origin?: TileOrigin) => void;
 }
 
-function FlyerTile({
-  artist,
-  index,
-  isTransitionTarget,
-  onSelectArtist,
-}: FlyerTileProps) {
+function FlyerTile({ artist, index, onSelectArtist }: FlyerTileProps) {
   const [imageError, setImageError] = useState(false);
   const [wideImageError, setWideImageError] = useState(false);
 
@@ -40,7 +39,12 @@ function FlyerTile({
       return;
     }
     e.preventDefault();
-    onSelectArtist(artist.slug);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const vw = window.innerWidth || 1;
+    const vh = window.innerHeight || 1;
+    const xPct = Math.round(((rect.left + rect.width / 2) / vw) * 100);
+    const yPct = Math.round(((rect.top + rect.height / 2) / vh) * 100);
+    onSelectArtist(artist.slug, { xPct, yPct });
   };
 
   return (
@@ -49,22 +53,17 @@ function FlyerTile({
       href={`/artistas/${artist.slug}`}
       onClick={handleClick}
       aria-label={`Abrir portfólio de ${artist.name}`}
-      className={`group relative block w-full overflow-hidden rounded-lg border border-white/10 bg-[#09090B] transition-[border-color,transform] duration-200 ease-out hover:border-white/35 active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+      className={`group relative block w-full touch-manipulation overflow-hidden rounded-lg border border-white/10 bg-[#09090B] transition-[border-color,transform] duration-150 ease-out hover:border-white/35 active:scale-[0.975] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
         hasWidePhoto ? 'col-span-2 aspect-[16/10]' : 'col-span-1 aspect-[4/5]'
       }`}
     >
-      <div
-        className="relative h-full w-full"
-        style={
-          isTransitionTarget ? { viewTransitionName: 'artist-hero-cover' } : undefined
-        }
-      >
+      <div className="relative h-full w-full">
         {activePhoto ? (
           <img
             src={activePhoto}
             alt={artist.name}
-            loading={index < 4 ? 'eager' : 'lazy'}
-            fetchPriority={index < 2 ? 'high' : 'auto'}
+            loading="eager"
+            fetchPriority={index < 4 ? 'high' : 'auto'}
             decoding="async"
             referrerPolicy="no-referrer"
             style={{ objectPosition: activePosition }}
@@ -75,7 +74,7 @@ function FlyerTile({
                 setImageError(true);
               }
             }}
-            className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+            className="h-full w-full object-cover transition-transform duration-300 ease-out sm:group-hover:scale-[1.03]"
           />
         ) : (
           /* Capa tipográfica provisória com o nome completo e o motivo dos elos da Loop */
@@ -114,8 +113,8 @@ function FlyerTile({
 }
 
 export function FlyerMosaic({
-  transitionSlug,
   hideHeroLogo = false,
+  isBackgrounded = false,
   onSelectArtist,
 }: FlyerMosaicProps) {
   const [muted, setMuted] = useState<boolean>(() => isSoundMuted());
@@ -131,7 +130,12 @@ export function FlyerMosaic({
   };
 
   return (
-    <div className="min-h-dvh bg-[#050505] text-[#FAFAFA]">
+    <div
+      aria-hidden={isBackgrounded || undefined}
+      className={`min-h-dvh origin-top bg-[#050505] text-[#FAFAFA] transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        isBackgrounded ? 'pointer-events-none scale-[0.97] opacity-40' : 'scale-100 opacity-100'
+      }`}
+    >
       <div className="mx-auto w-full max-w-[680px] px-3 pb-28 pt-2 sm:px-5 sm:pb-32 sm:pt-3">
         {/* Barra utilitária discreta: controle de som à esquerda e Instagram oficial à direita */}
         <header className="flex h-11 items-center justify-between gap-4">
@@ -139,7 +143,7 @@ export function FlyerMosaic({
             type="button"
             onClick={handleToggleSound}
             aria-label={muted ? 'Ativar som de transição' : 'Silenciar som de transição'}
-            className="-ml-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-zinc-400 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="-ml-2 inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center rounded-lg text-zinc-400 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             {muted ? (
               <VolumeX className="h-4 w-4" aria-hidden="true" />
@@ -153,7 +157,7 @@ export function FlyerMosaic({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram oficial da Loop Talents"
-            className="-mr-2 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-zinc-200 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="-mr-2 inline-flex min-h-[44px] min-w-[44px] touch-manipulation items-center justify-center rounded-lg text-zinc-200 transition-colors duration-150 hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <Instagram className="h-5 w-5" aria-hidden="true" />
           </a>
@@ -203,7 +207,7 @@ export function FlyerMosaic({
                 href={AGENCY_CONFIG.playlistUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex min-h-[76px] items-center justify-between gap-3 rounded-2xl border border-white/15 bg-[#0A0D0B] p-2.5 transition-colors duration-150 hover:border-[#1DB954]/60 hover:bg-[#0E1310] sm:p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="group flex min-h-[76px] touch-manipulation items-center justify-between gap-3 rounded-2xl border border-white/15 bg-[#0A0D0B] p-2.5 transition-colors duration-150 hover:border-[#1DB954]/60 hover:bg-[#0E1310] sm:p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div className="aspect-[16/10] w-24 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black sm:w-28">
@@ -254,7 +258,6 @@ export function FlyerMosaic({
                 key={artist.slug}
                 artist={artist}
                 index={index}
-                isTransitionTarget={transitionSlug === artist.slug}
                 onSelectArtist={onSelectArtist}
               />
             ))}
@@ -265,13 +268,17 @@ export function FlyerMosaic({
       </div>
 
       {/* Botão fixo perto do polegar na parte inferior da tela */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-[#050505] via-[#050505]/95 to-transparent pt-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div
+        className={`pointer-events-none fixed inset-x-0 bottom-0 z-30 bg-gradient-to-t from-[#050505] via-[#050505]/95 to-transparent pt-6 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-opacity duration-200 ${
+          isBackgrounded ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
         <div className="pointer-events-auto mx-auto w-full max-w-[680px] px-3 sm:px-5">
           <a
             href={getGeneralWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black shadow-lg transition-colors duration-150 hover:bg-zinc-200 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            className="flex min-h-[48px] w-full touch-manipulation items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black shadow-lg transition-colors duration-150 hover:bg-zinc-200 active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
           >
             <MessageCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>Contratar artistas</span>

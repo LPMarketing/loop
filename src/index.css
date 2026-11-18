@@ -11,7 +11,7 @@
     background-color: #050505;
     color: #fafafa;
     font-family: var(--font-sans);
-    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -45,22 +45,7 @@
     linear-gradient(180deg, #0d0d10 0%, #070709 100%);
 }
 
-/* Transição compartilhada do retrato entre o mosaico e o perfil */
-::view-transition-old(artist-hero-cover),
-::view-transition-new(artist-hero-cover) {
-  animation-duration: 280ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  ::view-transition-old(artist-hero-cover),
-  ::view-transition-new(artist-hero-cover) {
-    animation-duration: 0.01ms !important;
-  }
 
   *,
   *::before,
