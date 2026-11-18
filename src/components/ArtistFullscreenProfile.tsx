@@ -237,10 +237,10 @@ function ArtistProfileBody({
       role="dialog"
       aria-modal="true"
       aria-label={`Portfólio de ${artist.name}`}
-      initial={animateOnMount ? { opacity: 0, scale: 0.94, y: 20 } : false}
+      initial={animateOnMount ? { opacity: 0, scale: 0.9, y: 34 } : false}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: 16 }}
-      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      exit={{ opacity: 0, scale: 0.93, y: 24 }}
+      transition={{ duration: 0.46, ease: [0.16, 1, 0.3, 1] }}
       style={{ transformOrigin }}
       className="fixed inset-0 z-40 bg-[#050505] text-[#FAFAFA] will-change-transform"
     >
@@ -345,11 +345,11 @@ function ArtistProfileBody({
                         href={artist.spotify}
                         target="_blank"
                         rel="noopener noreferrer"
-                        initial={{ opacity: 0, y: 22, scale: 0.96 }}
+                        initial={{ opacity: 0, y: 28, scale: 0.94 }}
                         whileInView={{ opacity: 1, y: 0, scale: 1 }}
                         whileTap={{ scale: 0.985 }}
                         viewport={{ once: true, root: scrollContainerRef, amount: 0.1 }}
-                        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                        transition={{ duration: 0.62, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
                         className="group flex min-h-[108px] touch-manipulation flex-col justify-between rounded-2xl border border-white/15 bg-[#0A0D0B] p-3.5 transition-colors duration-150 hover:border-[#1DB954]/60 hover:bg-[#0E1310] sm:p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       >
                         <div className="flex items-center justify-between gap-2">
@@ -373,10 +373,10 @@ function ArtistProfileBody({
                       </motion.a>
                     ) : (
                       <motion.div
-                        initial={{ opacity: 0, y: 22, scale: 0.96 }}
+                        initial={{ opacity: 0, y: 28, scale: 0.94 }}
                         whileInView={{ opacity: 1, y: 0, scale: 1 }}
                         viewport={{ once: true, root: scrollContainerRef, amount: 0.1 }}
-                        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                        transition={{ duration: 0.62, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
                         className="flex min-h-[108px] flex-col justify-between rounded-2xl border border-white/15 bg-[#0A0D0B] p-3.5 sm:p-4"
                       >
                         <div className="flex items-center justify-between gap-2">
@@ -402,11 +402,11 @@ function ArtistProfileBody({
                       href={artist.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
-                      initial={{ opacity: 0, y: 22, scale: 0.96 }}
+                      initial={{ opacity: 0, y: 28, scale: 0.94 }}
                       whileInView={{ opacity: 1, y: 0, scale: 1 }}
                       whileTap={{ scale: 0.985 }}
                       viewport={{ once: true, root: scrollContainerRef, amount: 0.1 }}
-                      transition={{ duration: 0.38, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
+                      transition={{ duration: 0.62, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
                       className="group flex min-h-[108px] touch-manipulation flex-col justify-between rounded-2xl border border-white/15 bg-[#0D0D10] p-3.5 transition-colors duration-150 hover:border-white/35 sm:p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                     >
                       <div className="flex items-center justify-between gap-2">

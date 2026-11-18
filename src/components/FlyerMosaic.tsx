@@ -89,11 +89,12 @@ function FlyerTile({ artist, index, onSelectArtist }: FlyerTileProps) {
           ? false
           : {
               opacity: 0,
-              y: 44,
-              scale: 0.92,
-              rotateX: 8,
-              rotateZ: isLeftColumn ? -1.4 : 1.4,
-              transformPerspective: 900,
+              y: 72,
+              scale: 0.86,
+              rotateX: 16,
+              rotateY: isLeftColumn ? 9 : -9,
+              rotateZ: isLeftColumn ? -2.4 : 2.4,
+              transformPerspective: 950,
             }
       }
       whileInView={{
@@ -101,42 +102,55 @@ function FlyerTile({ artist, index, onSelectArtist }: FlyerTileProps) {
         y: 0,
         scale: 1,
         rotateX: 0,
+        rotateY: 0,
         rotateZ: 0,
       }}
       whileTap={{ scale: 0.975 }}
       viewport={{ once: true, amount: 0.12 }}
       transition={{
-        duration: 0.48,
-        delay: isFirstRow ? 0 : isLeftColumn ? 0 : 0.075,
-        ease: [0.22, 1, 0.36, 1],
+        duration: 0.88,
+        delay: isFirstRow ? 0 : isLeftColumn ? 0 : 0.14,
+        ease: [0.16, 1, 0.3, 1],
       }}
-      className={`group relative block w-full touch-manipulation overflow-hidden rounded-lg border border-white/10 bg-[#09090B] transition-colors duration-150 hover:border-white/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white will-change-transform ${
+      className={`group relative block w-full touch-manipulation overflow-hidden rounded-lg border border-white/10 bg-[#09090B] transition-colors duration-200 hover:border-white/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white will-change-transform ${
         hasWidePhoto ? 'col-span-2 aspect-[16/10]' : 'col-span-1 aspect-[4/5]'
       }`}
     >
-      <div className="relative h-full w-full">
+      <div className="relative h-full w-full overflow-hidden">
         {activePhoto ? (
-          <motion.img
-            src={activePhoto}
-            alt={artist.name}
-            loading="eager"
-            fetchPriority={index < 4 ? 'high' : 'auto'}
-            decoding="async"
-            referrerPolicy="no-referrer"
-            style={{
-              objectPosition: activePosition,
-              y: photoParallaxY,
-              scale: 1.06,
+          <motion.div
+            initial={isFirstRow ? false : { scale: 1.2, opacity: 0.25 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true, amount: 0.12 }}
+            transition={{
+              duration: 1.05,
+              delay: isFirstRow ? 0 : isLeftColumn ? 0.04 : 0.18,
+              ease: [0.16, 1, 0.3, 1],
             }}
-            onError={() => {
-              if (hasWidePhoto) {
-                setWideImageError(true);
-              } else {
-                setImageError(true);
-              }
-            }}
-            className="h-full w-full object-cover will-change-transform"
-          />
+            className="h-full w-full will-change-transform"
+          >
+            <motion.img
+              src={activePhoto}
+              alt={artist.name}
+              loading="eager"
+              fetchPriority={index < 4 ? 'high' : 'auto'}
+              decoding="async"
+              referrerPolicy="no-referrer"
+              style={{
+                objectPosition: activePosition,
+                y: photoParallaxY,
+                scale: 1.07,
+              }}
+              onError={() => {
+                if (hasWidePhoto) {
+                  setWideImageError(true);
+                } else {
+                  setImageError(true);
+                }
+              }}
+              className="h-full w-full object-cover will-change-transform"
+            />
+          </motion.div>
         ) : (
           /* Capa tipográfica provisória com o nome completo e o motivo dos elos da Loop */
           <div className="flyer-tile-texture relative h-full w-full">
@@ -152,32 +166,58 @@ function FlyerTile({ artist, index, onSelectArtist }: FlyerTileProps) {
           </div>
         )}
 
+        {/* Feixe de luz diagonal de palco ao revelar o artista */}
+        {!isFirstRow && (
+          <motion.div
+            aria-hidden="true"
+            initial={{ x: '-130%', opacity: 0 }}
+            whileInView={{ x: '220%', opacity: [0, 0.85, 0] }}
+            viewport={{ once: true, amount: 0.12 }}
+            transition={{
+              duration: 1.05,
+              delay: isLeftColumn ? 0.18 : 0.32,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+            className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+          />
+        )}
+
         {/* Degradê localizado atrás do nome para garantir leitura sobre qualquer foto */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 h-[55%] bg-gradient-to-t from-black/95 via-black/45 to-transparent"
         />
 
-        <motion.div
-          initial={isFirstRow ? false : { opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.12 }}
-          transition={{
-            duration: 0.36,
-            delay: isFirstRow ? 0 : isLeftColumn ? 0.08 : 0.15,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="absolute inset-x-0 bottom-0 p-3 sm:p-4"
-        >
+        <div className="absolute inset-x-0 bottom-0 overflow-hidden p-3 sm:p-4">
           {artist.genre.trim() && (
-            <p className="mb-0.5 truncate text-[11px] font-medium text-zinc-300 sm:text-xs">
+            <motion.p
+              initial={isFirstRow ? false : { opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.12 }}
+              transition={{
+                duration: 0.55,
+                delay: isFirstRow ? 0 : isLeftColumn ? 0.2 : 0.32,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="mb-0.5 truncate text-[11px] font-medium text-zinc-300 sm:text-xs"
+            >
               {artist.genre}
-            </p>
+            </motion.p>
           )}
-          <h2 className="font-display text-[1.45rem] font-extrabold leading-[0.95] tracking-tight text-white sm:text-[1.95rem]">
+          <motion.h2
+            initial={isFirstRow ? false : { y: '115%', opacity: 0 }}
+            whileInView={{ y: '0%', opacity: 1 }}
+            viewport={{ once: true, amount: 0.12 }}
+            transition={{
+              duration: 0.68,
+              delay: isFirstRow ? 0 : isLeftColumn ? 0.24 : 0.36,
+              ease: [0.16, 1, 0.3, 1],
+            }}
+            className="font-display text-[1.45rem] font-extrabold leading-[0.95] tracking-tight text-white sm:text-[1.95rem]"
+          >
             {artist.name}
-          </h2>
-        </motion.div>
+          </motion.h2>
+        </div>
       </div>
     </motion.a>
   );
@@ -301,7 +341,7 @@ export function FlyerMosaic({
           className="pointer-events-none absolute inset-0 border-b border-white/[0.08] bg-[#050505]/85 backdrop-blur-md"
         />
 
-        <div className="relative mx-auto flex h-12 w-full max-w-[680px] items-center justify-between px-3 sm:px-5">
+        <div className="relative mx-auto flex h-12 w-full max-w-[680px] items-center justify-between px-4 sm:px-6">
           <button
             type="button"
             onClick={handleToggleSound}
@@ -383,11 +423,11 @@ export function FlyerMosaic({
       {/* Conteúdo principal do casting */}
       <div
         aria-hidden={isBackgrounded || undefined}
-        className={`min-h-dvh origin-top bg-[#050505] text-[#FAFAFA] transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          isBackgrounded ? 'pointer-events-none scale-[0.97] opacity-40' : 'opacity-100'
+        className={`min-h-dvh origin-top bg-[#050505] text-[#FAFAFA] transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+          isBackgrounded ? 'pointer-events-none scale-[0.96] opacity-35' : 'opacity-100'
         }`}
       >
-        <div className="mx-auto w-full max-w-[680px] px-3 pb-24 pt-12 sm:px-5 sm:pb-28 sm:pt-12">
+        <div className="mx-auto w-full max-w-[680px] px-4 pb-24 pt-12 sm:px-6 sm:pb-28 sm:pt-12">
           <main className="mt-1">
             {/* Palco principal mantendo a geometria exata da logo oficial da Loop Talents */}
             <section
@@ -428,16 +468,24 @@ export function FlyerMosaic({
               </div>
             </section>
 
-            {/* Destaque compacto da Playlist Oficial no Spotify com a capa oficial */}
+            {/* Destaque compacto da Playlist Oficial no Spotify com equalizador musical animado */}
             {hasPlaylist && (
               <section aria-label="Playlist oficial no Spotify" className="mb-4">
                 <a
                   href={AGENCY_CONFIG.playlistUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex min-h-[76px] touch-manipulation items-center justify-between gap-3 rounded-2xl border border-white/15 bg-[#0A0D0B] p-2.5 transition-colors duration-150 hover:border-[#1DB954]/60 hover:bg-[#0E1310] sm:p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  className="group relative flex min-h-[76px] touch-manipulation items-center justify-between gap-3 overflow-hidden rounded-2xl border border-white/15 bg-[#0A0D0B] p-2.5 transition-colors duration-200 hover:border-[#1DB954]/60 hover:bg-[#0E1310] sm:p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                 >
-                  <div className="flex min-w-0 items-center gap-3">
+                  {/* Pulso sutil de grave / onda sonora Spotify ao fundo */}
+                  <motion.div
+                    aria-hidden="true"
+                    animate={{ opacity: [0.35, 0.75, 0.35], scale: [1, 1.05, 1] }}
+                    transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
+                    className="pointer-events-none absolute -left-8 -top-10 h-36 w-56 rounded-full bg-[radial-gradient(circle,rgba(29,185,84,0.18),transparent_70%)]"
+                  />
+
+                  <div className="relative z-10 flex min-w-0 items-center gap-3">
                     <div className="aspect-[16/10] w-24 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black sm:w-28">
                       <img
                         src={AGENCY_CONFIG.playlistCover}
@@ -449,19 +497,48 @@ export function FlyerMosaic({
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <SpotifyLogo className="h-3.5 w-3.5 shrink-0" />
-                        <span className="text-[11px] font-semibold text-[#1DB954]">
-                          Spotify
-                        </span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <SpotifyLogo className="h-3.5 w-3.5 shrink-0" />
+                          <span className="text-[11px] font-semibold text-[#1DB954]">
+                            Spotify
+                          </span>
+                        </div>
+
+                        {/* Equalizador animado de batida musical */}
+                        <div
+                          aria-hidden="true"
+                          className="flex h-3 items-end gap-[2px]"
+                        >
+                          {[
+                            { keys: [0.35, 1, 0.45, 0.85, 0.35], dur: 1.05 },
+                            { keys: [0.85, 0.4, 1, 0.55, 0.85], dur: 0.9 },
+                            { keys: [0.5, 0.95, 0.3, 1, 0.5], dur: 1.15 },
+                            { keys: [0.9, 0.35, 0.8, 0.45, 0.9], dur: 0.95 },
+                          ].map((bar, barIdx) => (
+                            <motion.span
+                              key={barIdx}
+                              animate={{ scaleY: bar.keys }}
+                              transition={{
+                                duration: bar.dur,
+                                repeat: Infinity,
+                                ease: 'easeInOut',
+                                delay: barIdx * 0.08,
+                              }}
+                              style={{ transformOrigin: 'bottom' }}
+                              className="h-3 w-[2px] rounded-full bg-[#1DB954]"
+                            />
+                          ))}
+                        </div>
                       </div>
+
                       <p className="mt-0.5 truncate font-display text-base font-bold leading-tight tracking-tight text-white sm:text-lg">
                         Playlist oficial da Loop
                       </p>
                     </div>
                   </div>
 
-                  <span className="inline-flex shrink-0 items-center gap-1 pr-1 text-xs font-semibold text-zinc-300 transition-colors group-hover:text-white">
+                  <span className="relative z-10 inline-flex shrink-0 items-center gap-1 pr-1 text-xs font-semibold text-zinc-300 transition-colors group-hover:text-white">
                     <span>Ouvir</span>
                     <ArrowUpRight
                       className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
@@ -473,14 +550,14 @@ export function FlyerMosaic({
             )}
 
             {/* Cabeçalho do casting */}
-            <div className="mb-3 flex items-center justify-between gap-3 sm:mb-3.5">
+            <div className="mb-3.5 flex items-center justify-between gap-3 sm:mb-4">
               <h1 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
                 Nossos artistas
               </h1>
             </div>
 
-            {/* Mosaico de 2 colunas com estética de flyer de festival e animação ao descer */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+            {/* Mosaico de 2 colunas com espaçamento confortável entre os artistas */}
+            <div className="grid grid-cols-2 gap-x-3.5 gap-y-4 sm:gap-5">
               {ARTISTS.map((artist, index) => (
                 <FlyerTile
                   key={artist.slug}
@@ -502,7 +579,7 @@ export function FlyerMosaic({
           isBackgrounded ? 'opacity-0' : 'opacity-100'
         }`}
       >
-        <div className="pointer-events-auto mx-auto w-full max-w-[680px] px-3 sm:px-5">
+        <div className="pointer-events-auto mx-auto w-full max-w-[680px] px-4 sm:px-6">
           <a
             href={getGeneralWhatsAppUrl()}
             target="_blank"
