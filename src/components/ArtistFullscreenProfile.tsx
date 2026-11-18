@@ -8,10 +8,10 @@ import {
   Play,
   Youtube,
 } from 'lucide-react';
-import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { motion, useScroll, useTransform } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { getArtistWhatsAppUrl } from '../data/agency';
-import { getArtistBySlug, type ArtistTrack } from '../data/artists';
+import { getArtistBySlug, type Artist, type ArtistTrack } from '../data/artists';
 import type { TileOrigin } from './FlyerMosaic';
 import { SpotifyLogo } from './SpotifyLogo';
 import { VideoPlayer } from './VideoPlayer';
@@ -106,12 +106,8 @@ export function ArtistFullscreenProfile({
   onBack,
 }: ArtistFullscreenProfileProps) {
   const artist = getArtistBySlug(slug);
-  const [imageError, setImageError] = useState(false);
-  const [autoStartToken, setAutoStartToken] = useState(0);
 
   useEffect(() => {
-    setImageError(false);
-    setAutoStartToken(0);
     if (artist) {
       document.title = `${artist.name} — Loop Talents`;
     } else {
@@ -154,6 +150,38 @@ export function ArtistFullscreenProfile({
       </motion.div>
     );
   }
+
+  return (
+    <ArtistProfileBody
+      key={artist.slug}
+      artist={artist}
+      transformOrigin={transformOrigin}
+      animateOnMount={animateOnMount}
+      onBack={onBack}
+    />
+  );
+}
+
+function ArtistProfileBody({
+  artist,
+  transformOrigin,
+  animateOnMount,
+  onBack,
+}: {
+  artist: Artist;
+  transformOrigin: string;
+  animateOnMount: boolean;
+  onBack: () => void;
+}) {
+  const [imageError, setImageError] = useState(false);
+  const [autoStartToken, setAutoStartToken] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const { scrollY } = useScroll({ container: scrollContainerRef });
+  const heroImageY = useTransform(scrollY, [0, 360], [0, 56]);
+  const heroImageScale = useTransform(scrollY, [0, 360], [1, 1.08]);
+  const heroTextY = useTransform(scrollY, [0, 260], [0, -18]);
+  const heroTextOpacity = useTransform(scrollY, [0, 260], [1, 0.38]);
 
   const hasPhoto = Boolean(artist.image.trim()) && !imageError;
   const hasGenre = Boolean(artist.genre.trim());
@@ -231,21 +259,28 @@ export function ArtistFullscreenProfile({
       </div>
 
       {/* Área rolável independente do mosaico de fundo */}
-      <div className="h-full w-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]">
+      <div
+        ref={scrollContainerRef}
+        className="h-full w-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+      >
         <div className="mx-auto w-full max-w-[680px]">
-          {/* Capa de impacto com retrato */}
+          {/* Capa de impacto com retrato e parallax suave ao descer */}
           <section aria-label={`Perfil de ${artist.name}`} className="relative">
             <div className="relative aspect-[4/5] max-h-[72dvh] w-full overflow-hidden bg-[#09090B] sm:rounded-b-2xl">
               {hasPhoto ? (
-                <img
+                <motion.img
                   src={artist.image}
                   alt={artist.name}
                   fetchPriority="high"
                   decoding="sync"
                   referrerPolicy="no-referrer"
-                  style={{ objectPosition: artist.imagePosition || 'center top' }}
+                  style={{
+                    objectPosition: artist.imagePosition || 'center top',
+                    y: heroImageY,
+                    scale: heroImageScale,
+                  }}
                   onError={() => setImageError(true)}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover will-change-transform"
                 />
               ) : (
                 <div className="flyer-tile-texture relative h-full w-full">
@@ -266,7 +301,10 @@ export function ArtistFullscreenProfile({
                 className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-[#050505] via-black/55 to-transparent"
               />
 
-              <div className="absolute inset-x-0 bottom-0 px-4 pb-5 pt-16 sm:px-6 sm:pb-6">
+              <motion.div
+                style={{ y: heroTextY, opacity: heroTextOpacity }}
+                className="absolute inset-x-0 bottom-0 px-4 pb-5 pt-16 sm:px-6 sm:pb-6"
+              >
                 {hasGenre && (
                   <p className="mb-1 text-xs font-medium text-zinc-300 sm:text-sm">
                     {artist.genre}
@@ -287,7 +325,7 @@ export function ArtistFullscreenProfile({
                     <span>Assistir ao show</span>
                   </button>
                 )}
-              </div>
+              </motion.div>
             </div>
           </section>
 
@@ -303,11 +341,16 @@ export function ArtistFullscreenProfile({
                 >
                   {hasSpotifyCard && (
                     hasSpotify ? (
-                      <a
+                      <motion.a
                         href={artist.spotify}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group flex min-h-[108px] touch-manipulation flex-col justify-between rounded-2xl border border-white/15 bg-[#0A0D0B] p-3.5 transition-colors duration-150 hover:border-[#1DB954]/60 hover:bg-[#0E1310] active:scale-[0.985] sm:p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                        initial={{ opacity: 0, y: 22, scale: 0.96 }}
+                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                        whileTap={{ scale: 0.985 }}
+                        viewport={{ once: true, root: scrollContainerRef, amount: 0.1 }}
+                        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                        className="group flex min-h-[108px] touch-manipulation flex-col justify-between rounded-2xl border border-white/15 bg-[#0A0D0B] p-3.5 transition-colors duration-150 hover:border-[#1DB954]/60 hover:bg-[#0E1310] sm:p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#1DB954]/25 bg-[#121A14]">
@@ -327,9 +370,15 @@ export function ArtistFullscreenProfile({
                             {hasStreams ? 'Ouvir no Spotify' : 'Perfil oficial'}
                           </p>
                         </div>
-                      </a>
+                      </motion.a>
                     ) : (
-                      <div className="flex min-h-[108px] flex-col justify-between rounded-2xl border border-white/15 bg-[#0A0D0B] p-3.5 sm:p-4">
+                      <motion.div
+                        initial={{ opacity: 0, y: 22, scale: 0.96 }}
+                        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                        viewport={{ once: true, root: scrollContainerRef, amount: 0.1 }}
+                        transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
+                        className="flex min-h-[108px] flex-col justify-between rounded-2xl border border-white/15 bg-[#0A0D0B] p-3.5 sm:p-4"
+                      >
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#1DB954]/25 bg-[#121A14]">
                             <SpotifyLogo className="h-4 w-4" />
@@ -344,16 +393,21 @@ export function ArtistFullscreenProfile({
                             Spotify
                           </p>
                         </div>
-                      </div>
+                      </motion.div>
                     )
                   )}
 
                   {hasInstagram && (
-                    <a
+                    <motion.a
                       href={artist.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group flex min-h-[108px] touch-manipulation flex-col justify-between rounded-2xl border border-white/15 bg-[#0D0D10] p-3.5 transition-colors duration-150 hover:border-white/35 active:scale-[0.985] sm:p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                      initial={{ opacity: 0, y: 22, scale: 0.96 }}
+                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                      whileTap={{ scale: 0.985 }}
+                      viewport={{ once: true, root: scrollContainerRef, amount: 0.1 }}
+                      transition={{ duration: 0.38, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
+                      className="group flex min-h-[108px] touch-manipulation flex-col justify-between rounded-2xl border border-white/15 bg-[#0D0D10] p-3.5 transition-colors duration-150 hover:border-white/35 sm:p-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 bg-white/[0.04]">
@@ -376,14 +430,21 @@ export function ArtistFullscreenProfile({
                           {instagramHandle || 'Perfil oficial'}
                         </p>
                       </div>
-                    </a>
+                    </motion.a>
                   )}
                 </div>
               </section>
             )}
 
             {hasBio && (
-              <section aria-label="Informações do artista" className="space-y-2">
+              <motion.section
+                aria-label="Informações do artista"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, root: scrollContainerRef, amount: 0.12 }}
+                transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-2"
+              >
                 <h2 className="font-display text-lg font-bold tracking-tight text-white">
                   Informações
                 </h2>
@@ -392,11 +453,19 @@ export function ArtistFullscreenProfile({
                     paragraph.trim() ? <p key={i}>{paragraph}</p> : null
                   )}
                 </div>
-              </section>
+              </motion.section>
             )}
 
             {hasVideo && (
-              <section id="artist-video" aria-label="Vídeo de apresentação" className="space-y-2.5">
+              <motion.section
+                id="artist-video"
+                aria-label="Vídeo de apresentação"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, root: scrollContainerRef, amount: 0.12 }}
+                transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-2.5"
+              >
                 <h2 className="font-display text-lg font-bold tracking-tight text-white">
                   Apresentação
                 </h2>
@@ -407,12 +476,19 @@ export function ArtistFullscreenProfile({
                   artistName={artist.name}
                   autoStartToken={autoStartToken}
                 />
-              </section>
+              </motion.section>
             )}
 
             {/* Até 3 sucessos no Spotify (foto, nome e streams) quando cadastrados */}
             {hasTopTracks && (
-              <section aria-label="Destaques no Spotify" className="space-y-2.5">
+              <motion.section
+                aria-label="Destaques no Spotify"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, root: scrollContainerRef, amount: 0.12 }}
+                transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-2.5"
+              >
                 <h2 className="font-display text-lg font-bold tracking-tight text-white">
                   Destaques no Spotify
                 </h2>
@@ -425,11 +501,18 @@ export function ArtistFullscreenProfile({
                     />
                   ))}
                 </div>
-              </section>
+              </motion.section>
             )}
 
             {extraLinks.length > 0 && (
-              <section aria-label="Outros materiais" className="space-y-2.5">
+              <motion.section
+                aria-label="Outros materiais"
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, root: scrollContainerRef, amount: 0.12 }}
+                transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+                className="space-y-2.5"
+              >
                 <h2 className="font-display text-lg font-bold tracking-tight text-white">
                   Materiais
                 </h2>
@@ -459,7 +542,7 @@ export function ArtistFullscreenProfile({
                     );
                   })}
                 </div>
-              </section>
+              </motion.section>
             )}
 
             {!hasAnyProfileDetails && (

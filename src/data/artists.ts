@@ -251,7 +251,7 @@ export const ARTISTS: Artist[] = [
   {
     name: 'Tubas',
     slug: 'tubas',
-    image: '/assets/aistudio/image_076e23d5.png',
+    image: '/assets/aistudio/Tubas_ff83d290.PNG',
     imagePosition: 'center top',
     genre: '',
     bio: '',

@@ -1,9 +1,16 @@
 import { Instagram } from 'lucide-react';
+import { motion } from 'motion/react';
 import { AGENCY_CONFIG } from '../data/agency';
 
 export function Footer() {
   return (
-    <footer className="mt-8 pt-2 text-center">
+    <motion.footer
+      initial={{ opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      className="mt-8 pt-2 text-center"
+    >
       <div className="space-y-1.5">
         <p className="text-xs font-medium text-zinc-400 sm:text-sm">
           {AGENCY_CONFIG.tagline}
@@ -18,6 +25,6 @@ export function Footer() {
           <span>{AGENCY_CONFIG.instagramHandle}</span>
         </a>
       </div>
-    </footer>
+    </motion.footer>
   );
 }
