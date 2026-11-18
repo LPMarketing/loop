@@ -8,6 +8,7 @@ import { SpotifyLogo } from './SpotifyLogo';
 
 interface FlyerMosaicProps {
   transitionSlug: string | null;
+  hideHeroLogo?: boolean;
   onSelectArtist: (slug: string) => void;
 }
 
@@ -112,7 +113,11 @@ function FlyerTile({
   );
 }
 
-export function FlyerMosaic({ transitionSlug, onSelectArtist }: FlyerMosaicProps) {
+export function FlyerMosaic({
+  transitionSlug,
+  hideHeroLogo = false,
+  onSelectArtist,
+}: FlyerMosaicProps) {
   const [muted, setMuted] = useState<boolean>(() => isSoundMuted());
   const hasPlaylist = Boolean(AGENCY_CONFIG.playlistUrl.trim());
 
@@ -176,10 +181,13 @@ export function FlyerMosaic({ transitionSlug, onSelectArtist }: FlyerMosaicProps
 
             <div className="relative z-10 flex flex-col items-center">
               <img
+                id="hero-loop-logo"
                 src={AGENCY_CONFIG.logo}
                 alt={AGENCY_CONFIG.name}
                 fetchPriority="high"
-                className="w-[210px] max-w-full object-contain mix-blend-screen sm:w-[290px]"
+                className={`w-[210px] max-w-full object-contain mix-blend-screen sm:w-[290px] ${
+                  hideHeroLogo ? 'opacity-0' : 'opacity-100'
+                }`}
               />
 
               <p className="mt-3 text-xs font-medium tracking-wide text-zinc-300 sm:text-sm">

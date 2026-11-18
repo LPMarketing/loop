@@ -8,21 +8,57 @@ interface DjIntroOverlayProps {
   onComplete: () => void;
 }
 
+interface LogoTargetTransform {
+  x: number;
+  y: number;
+  scale: number;
+}
+
 const EQ_BARS = [0.45, 0.85, 0.6, 1, 0.7, 0.9, 0.5, 0.8, 0.55];
 
 export function DjIntroOverlay({ onComplete }: DjIntroOverlayProps) {
   const [isExiting, setIsExiting] = useState(false);
+  const [exitTarget, setExitTarget] = useState<LogoTargetTransform>({
+    x: 0,
+    y: -140,
+    scale: 1.25,
+  });
   const [needsTapForSound, setNeedsTapForSound] = useState(false);
+
+  const logoBoxRef = useRef<HTMLDivElement | null>(null);
   const completedRef = useRef(false);
   const soundPlayedRef = useRef(false);
 
   const finishIntro = useCallback(() => {
     if (completedRef.current) return;
     completedRef.current = true;
+
+    const currentEl = logoBoxRef.current;
+    const heroLogoEl = document.getElementById('hero-loop-logo');
+
+    if (currentEl && heroLogoEl) {
+      const fromRect = currentEl.getBoundingClientRect();
+      const toRect = heroLogoEl.getBoundingClientRect();
+
+      if (fromRect.width > 0 && toRect.width > 0) {
+        const fromCenterX = fromRect.left + fromRect.width / 2;
+        const fromCenterY = fromRect.top + fromRect.height / 2;
+        const toCenterX = toRect.left + toRect.width / 2;
+        const toCenterY = toRect.top + toRect.height / 2;
+
+        setExitTarget({
+          x: toCenterX - fromCenterX,
+          y: toCenterY - fromCenterY,
+          scale: toRect.width / fromRect.width,
+        });
+      }
+    }
+
     setIsExiting(true);
+
     window.setTimeout(() => {
       onComplete();
-    }, 340);
+    }, 520);
   }, [onComplete]);
 
   useEffect(() => {
@@ -42,7 +78,7 @@ export function DjIntroOverlay({ onComplete }: DjIntroOverlayProps) {
       if (active) {
         finishIntro();
       }
-    }, 2200);
+    }, 2000);
 
     return () => {
       active = false;
@@ -58,31 +94,37 @@ export function DjIntroOverlay({ onComplete }: DjIntroOverlayProps) {
       await playDjIntroSound();
       window.setTimeout(() => {
         finishIntro();
-      }, 650);
+      }, 600);
     } else {
       finishIntro();
     }
   };
 
   return (
-    <motion.div
+    <div
       role="dialog"
       aria-label="Abertura Loop Talents"
-      initial={{ opacity: 1 }}
-      animate={{ opacity: isExiting ? 0 : 1 }}
-      transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
       onClick={handleInteraction}
-      className="fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center overflow-hidden bg-[#050505] px-6 select-none"
+      className={`fixed inset-0 z-50 flex cursor-pointer flex-col items-center justify-center overflow-hidden px-6 select-none ${
+        isExiting ? 'pointer-events-none' : ''
+      }`}
     >
-      {/* Luz de palco radial */}
-      <div
+      {/* Fundo escuro que se abre revelando a página inicial */}
+      <motion.div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_65%_50%_at_50%_48%,rgba(255,255,255,0.14),transparent_70%)]"
-      />
+        initial={{ opacity: 1 }}
+        animate={{ opacity: isExiting ? 0 : 1 }}
+        transition={{ duration: 0.44, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute inset-0 bg-[#050505]"
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_65%_50%_at_50%_48%,rgba(255,255,255,0.14),transparent_70%)]" />
+      </motion.div>
 
       {/* Botão discreto para pular entrada */}
-      <button
+      <motion.button
         type="button"
+        animate={{ opacity: isExiting ? 0 : 1 }}
+        transition={{ duration: 0.2 }}
         onClick={(e) => {
           e.stopPropagation();
           finishIntro();
@@ -90,32 +132,44 @@ export function DjIntroOverlay({ onComplete }: DjIntroOverlayProps) {
         className="absolute right-4 top-4 z-20 inline-flex min-h-[44px] items-center px-3 text-xs font-medium text-zinc-400 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-6 sm:top-6"
       >
         Pular
-      </button>
+      </motion.button>
 
-      {/* Prato de DJ (vinil girando + braço de toca-discos + logo oficial no centro) */}
+      {/* Prato de DJ (vinil girando + braço) que dissolve enquanto a logo se expande até o topo da home */}
       <div className="relative flex items-center justify-center">
-        {/* Anel giratório estilo prato Technics / vinil */}
         <motion.div
           aria-hidden="true"
           initial={{ rotate: -40, scale: 0.84, opacity: 0 }}
-          animate={{ rotate: 320, scale: 1, opacity: 1 }}
-          transition={{ duration: 2.1, ease: [0.16, 1, 0.3, 1] }}
+          animate={
+            isExiting
+              ? { rotate: 360, scale: 1.12, opacity: 0 }
+              : { rotate: 320, scale: 1, opacity: 1 }
+          }
+          transition={
+            isExiting
+              ? { duration: 0.38, ease: [0.16, 1, 0.3, 1] }
+              : { duration: 2.0, ease: [0.16, 1, 0.3, 1] }
+          }
           className="relative flex h-64 w-64 items-center justify-center rounded-full border border-white/15 bg-[radial-gradient(circle,transparent_44%,rgba(255,255,255,0.035)_45%,transparent_46%,transparent_58%,rgba(255,255,255,0.04)_59%,transparent_60%,transparent_74%,rgba(255,255,255,0.05)_75%,transparent_76%)] sm:h-80 sm:w-80"
         >
-          {/* Marcações estroboscópicas na borda do prato */}
           <span className="absolute inset-2 rounded-full border border-dashed border-white/20" />
           <span className="absolute top-3 h-2 w-2 rounded-full bg-white/70" />
           <span className="absolute bottom-3 h-1.5 w-1.5 rounded-full bg-white/40" />
         </motion.div>
 
-        {/* Braço do toca-discos entrando sobre o vinil */}
+        {/* Braço do toca-discos */}
         <motion.svg
           aria-hidden="true"
           viewBox="0 0 100 140"
           fill="none"
           initial={{ rotate: -22, opacity: 0 }}
-          animate={{ rotate: 4, opacity: 0.7 }}
-          transition={{ duration: 0.75, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          animate={
+            isExiting ? { rotate: -14, opacity: 0 } : { rotate: 4, opacity: 0.7 }
+          }
+          transition={
+            isExiting
+              ? { duration: 0.25, ease: 'easeOut' }
+              : { duration: 0.75, delay: 0.15, ease: [0.16, 1, 0.3, 1] }
+          }
           style={{ transformOrigin: '78px 18px' }}
           className="pointer-events-none absolute -right-4 -top-6 h-32 w-24 sm:-right-6 sm:-top-8 sm:h-40 sm:w-28"
         >
@@ -138,25 +192,40 @@ export function DjIntroOverlay({ onComplete }: DjIntroOverlayProps) {
           />
         </motion.svg>
 
-        {/* Logo oficial LOOP TALENTS centralizada em destaque */}
-        <motion.div
-          initial={{ scale: 0.88, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.55, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 flex items-center justify-center px-6"
-        >
-          <img
-            src={AGENCY_CONFIG.logo}
-            alt={AGENCY_CONFIG.name}
-            className="w-44 object-contain mix-blend-screen sm:w-56"
-          />
-        </motion.div>
+        {/* Contêiner de medida natural + expansão suave até a posição exata da logo na página inicial */}
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+          <div ref={logoBoxRef} className="w-44 sm:w-56">
+            <motion.img
+              src={AGENCY_CONFIG.logo}
+              alt={AGENCY_CONFIG.name}
+              initial={{ scale: 0.88, opacity: 0, x: 0, y: 0 }}
+              animate={
+                isExiting
+                  ? {
+                      x: exitTarget.x,
+                      y: exitTarget.y,
+                      scale: exitTarget.scale,
+                      opacity: 1,
+                    }
+                  : { scale: 1, opacity: 1, x: 0, y: 0 }
+              }
+              transition={
+                isExiting
+                  ? { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+                  : { duration: 0.55, delay: 0.2, ease: [0.16, 1, 0.3, 1] }
+              }
+              className="w-full object-contain mix-blend-screen"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Equalizador de DJ animado */}
-      <div
+      <motion.div
         aria-hidden="true"
-        className="mt-7 flex h-6 items-end justify-center gap-1.5"
+        animate={{ opacity: isExiting ? 0 : 1 }}
+        transition={{ duration: 0.22 }}
+        className="relative z-10 mt-7 flex h-6 items-end justify-center gap-1.5"
       >
         {EQ_BARS.map((height, i) => (
           <motion.span
@@ -176,20 +245,20 @@ export function DjIntroOverlay({ onComplete }: DjIntroOverlayProps) {
             className="h-6 w-1 rounded-full bg-white"
           />
         ))}
-      </div>
+      </motion.div>
 
       {/* Indicação sutil caso o navegador mobile peça um toque para liberar o som */}
-      {needsTapForSound && (
+      {needsTapForSound && !isExiting && (
         <motion.p
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-zinc-300"
+          className="relative z-10 mt-5 inline-flex items-center gap-2 text-xs font-medium text-zinc-300"
         >
           <Volume2 className="h-3.5 w-3.5 text-white" aria-hidden="true" />
           <span>Toque para ativar o som</span>
         </motion.p>
       )}
-    </motion.div>
+    </div>
   );
 }

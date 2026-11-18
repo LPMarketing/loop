@@ -232,6 +232,7 @@ export default function App() {
       ) : (
         <FlyerMosaic
           transitionSlug={transitionSlug}
+          hideHeroLogo={showIntro}
           onSelectArtist={handleOpenArtist}
         />
       )}
