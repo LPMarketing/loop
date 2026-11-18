@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Barlow Condensed", "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    background-color: #050505;
+    color: #fafafa;
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: #050505;
+    color: #fafafa;
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+}
+
+/* Textura discreta e luz de palco para peças tipográficas do flyer */
+.flyer-tile-texture {
+  background-color: #09090b;
+  background-image:
+    radial-gradient(ellipse 90% 55% at 50% 0%, rgba(255, 255, 255, 0.1), transparent 70%),
+    radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(180deg, #111115 0%, #070709 100%);
+  background-size: 100% 100%, 14px 14px, 100% 100%;
+}
+
+.card-stage-glow {
+  background-image:
+    radial-gradient(ellipse 85% 50% at 50% 0%, rgba(255, 255, 255, 0.08), transparent 68%),
+    linear-gradient(180deg, #0d0d10 0%, #070709 100%);
+}
+
+/* Transição compartilhada do retrato entre o mosaico e o perfil */
+::view-transition-old(artist-hero-cover),
+::view-transition-new(artist-hero-cover) {
+  animation-duration: 280ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  ::view-transition-old(artist-hero-cover),
+  ::view-transition-new(artist-hero-cover) {
+    animation-duration: 0.01ms !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

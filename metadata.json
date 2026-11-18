@@ -1,0 +1,6 @@
+{
+  "name": "Loop Talents",
+  "description": "Casting oficial e portfólio comercial da Loop Talents — agência de DJs e artistas. Mais que uma agência, somos um movimento.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
