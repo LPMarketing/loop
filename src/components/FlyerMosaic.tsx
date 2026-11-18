@@ -163,7 +163,7 @@ export function FlyerMosaic({
           {/* Palco principal destacando a logo oficial da Loop Talents no início da página */}
           <section
             aria-label="Apresentação Loop Talents"
-            className="relative mb-4 overflow-hidden rounded-2xl border border-white/15 bg-[#070709] px-5 py-6 text-center sm:mb-5 sm:py-8"
+            className="relative mb-3 overflow-hidden rounded-2xl border border-white/15 bg-[#070709] px-5 py-5 text-center sm:mb-4 sm:py-7"
           >
             {/* Luz de palco radial e sulcos sutis de vinil */}
             <div
@@ -172,11 +172,11 @@ export function FlyerMosaic({
             />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06] sm:h-72 sm:w-72"
+              className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.06] sm:h-68 sm:w-68"
             />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.05] sm:h-52 sm:w-52"
+              className="pointer-events-none absolute left-1/2 top-1/2 h-36 w-36 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/[0.05] sm:h-48 sm:w-48"
             />
 
             <div className="relative z-10 flex flex-col items-center">
@@ -185,38 +185,66 @@ export function FlyerMosaic({
                 src={AGENCY_CONFIG.logo}
                 alt={AGENCY_CONFIG.name}
                 fetchPriority="high"
-                className={`w-[210px] max-w-full object-contain mix-blend-screen sm:w-[290px] ${
+                className={`w-[205px] max-w-full object-contain mix-blend-screen sm:w-[280px] ${
                   hideHeroLogo ? 'opacity-0' : 'opacity-100'
                 }`}
               />
 
-              <p className="mt-3 text-xs font-medium tracking-wide text-zinc-300 sm:text-sm">
+              <p className="mt-2.5 text-xs font-medium tracking-wide text-zinc-300 sm:text-sm">
                 {AGENCY_CONFIG.tagline}
               </p>
             </div>
           </section>
 
-          {/* Cabeçalho do casting + Playlist oficial no Spotify */}
-          <div className="mb-3 flex items-center justify-between gap-3 sm:mb-3.5">
-            <h1 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Nossos artistas
-            </h1>
-
-            {hasPlaylist && (
+          {/* Destaque compacto da Playlist Oficial no Spotify com a capa oficial */}
+          {hasPlaylist && (
+            <section aria-label="Playlist oficial no Spotify" className="mb-4">
               <a
                 href={AGENCY_CONFIG.playlistUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex min-h-[40px] shrink-0 items-center gap-2 whitespace-nowrap rounded-xl border border-white/15 bg-[#0D0D10] px-3 py-2 text-xs font-semibold text-white transition-colors duration-150 hover:border-[#1DB954]/60 hover:bg-[#131317] sm:px-3.5 sm:text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="group flex min-h-[76px] items-center justify-between gap-3 rounded-2xl border border-white/15 bg-[#0A0D0B] p-2.5 transition-colors duration-150 hover:border-[#1DB954]/60 hover:bg-[#0E1310] sm:p-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
-                <SpotifyLogo className="h-4 w-4 shrink-0" />
-                <span>Playlist oficial</span>
-                <ArrowUpRight
-                  className="h-3.5 w-3.5 shrink-0 text-zinc-400 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white"
-                  aria-hidden="true"
-                />
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="aspect-[16/10] w-24 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black sm:w-28">
+                    <img
+                      src={AGENCY_CONFIG.playlistCover}
+                      alt="Capa da Playlist Oficial Loop Talents no Spotify"
+                      fetchPriority="high"
+                      decoding="async"
+                      className="h-full w-full object-cover object-center transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+                    />
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <SpotifyLogo className="h-3.5 w-3.5 shrink-0" />
+                      <span className="text-[11px] font-semibold text-[#1DB954]">
+                        Spotify
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate font-display text-base font-bold leading-tight tracking-tight text-white sm:text-lg">
+                      Playlist oficial da Loop
+                    </p>
+                  </div>
+                </div>
+
+                <span className="inline-flex shrink-0 items-center gap-1 pr-1 text-xs font-semibold text-zinc-300 transition-colors group-hover:text-white">
+                  <span>Ouvir</span>
+                  <ArrowUpRight
+                    className="h-4 w-4 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
+                </span>
               </a>
-            )}
+            </section>
+          )}
+
+          {/* Cabeçalho do casting */}
+          <div className="mb-3 flex items-center justify-between gap-3 sm:mb-3.5">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              Nossos artistas
+            </h1>
           </div>
 
           {/* Mosaico de 2 colunas com estética de flyer de festival */}

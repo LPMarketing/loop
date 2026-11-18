@@ -7,8 +7,9 @@ export const AGENCY_CONFIG = {
   // Quando houver vídeo de show da capa, defina o caminho em /public/loop/ (ex: '/loop/hero.mp4')
   heroVideo: '',
   heroVideoPoster: '',
-  // URL oficial da playlist da Loop no Spotify
+  // URL e capa oficial da playlist da Loop no Spotify
   playlistUrl: 'https://open.spotify.com/playlist/4tlPBCj1lEW8wSzKTHXlna?si=yXQkuyQYQEuswPz3d99eNw',
+  playlistCover: '/assets/aistudio/Capa-Spotify-Loop-Talents-HD_1475dfd8.png',
   whatsappNumber: '5562984133623',
   whatsappDisplay: '(62) 98413-3623',
   instagramUrl: 'https://www.instagram.com/looptalents/',
